@@ -118,12 +118,17 @@ while toc(tStart) < Tsec
     y = cfc(y);         % coarse CFO 
 
     % find the begining of the transmitted signal
-    convPreamble = abs(conv(y,flipud(conj(ref_preamble)),"same"));
-    convPreamble = convPreamble ./ sqrt(conv(abs(y).^2, ones(length(ref_preamble),1),"same"));
-    [peakValue, peakIndex] = max(convPreamble);
-    if peakValue > 0.6 % packet detected
+    [corr,lags] = xcorr(y,ref_preamble);
+    corr = abs(corr);
+    normFactor = sqrt( sum(abs(y).^2) * sum(abs(ref_preamble).^2) );
+    corr = corr/normFactor;
+    %Find the peaks of the cross-correlation
+    [pks, locs] = findpeaks(corr, 'MinPeakHeight', max(corr)*0.5);
+    % Select the highest peak
+    [peakValue, max_idx] = max(pks);
+    if peakValue > 1e-2 % packet detected
         disp("Preamble was decected. Processing....")
-        startSamplingIndex = peakIndex + 1;
+        %startSamplingIndex = peakIndex + 1;
 
     else
         disp("Frame dropped.")
