@@ -1,9 +1,6 @@
 clc;clear;close all;
 % ----------- Module SETTINGS -----------
-USRP_num =   2;
-ip       = "192.168.10.5,192.168.10.4"; 
 fc       = 2.45e9;      % Carrier frequency
-chmap    = 1:USRP_num;  % Channel mapping for multiple blundled SDRs
 txgain     = 10;         % RF  gain
 rxgain     = 20;         % RF gain
 decim    = 512;         % decimation (100e6/512 ≈ 195.3125 kS/s)
@@ -54,10 +51,8 @@ txfilter = comm.RaisedCosineTransmitFilter(...
 txdatasymbol = [zc_preamble;txmodulated]; % data packet starts with preamble
 txwave = txfilter([txdatasymbol;zeros(10,1)]); % Flush with zero
 normalizedtxwave = txwave /sqrt(mean(abs(txwave).^2));
-%disp(["Transmitted wave length is: ", size(normalizedtxwave)]);
 numRepeats = 10;                                  
 txBuf = repmat(normalizedtxwave, numRepeats, 1); % fill the buffer with the same repition of the signal to avoid underrun the buffer
-%disp(["Buffer filled with signal size of: ", size(txBuf)])
 
 % ========= Prepare Receiver side operations =========
 % Build the reference preamble for packet detection
@@ -116,14 +111,11 @@ while toc(tStart) < Tsec
     if ~valid || isempty(rxFrame)
         continue;
     end
-    %disp(["Length of rxFrame is: ", size(rxFrame)]);
+
     % Packet is captured, apply the receiving chain of operations
     y = agc(rxFrame);   % Operation1 : Equilizer
-    %disp(["equalized signal length is of dimension: ", size(y)]);
     y = rxfilter(y);    % matched filter the receiving signal
-    %disp(["Matched filter signal length is of dimension: ", size(y)]);
     y = cfc(y);         % coarse CFO 
-    %disp(["CFO corrected signal length is of dimension: ", size(y)]);
 
     % find the begining of the transmitted signal
     convPreamble = abs(conv(y,flipud(conj(ref_preamble)),"same"));
