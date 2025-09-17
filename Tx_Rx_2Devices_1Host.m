@@ -4,10 +4,10 @@ USRP_num =   2;
 ip       = "192.168.10.5,192.168.10.4"; 
 fc       = 2.45e9;      % Carrier frequency
 chmap    = 1:USRP_num;  % Channel mapping for multiple blundled SDRs
-txgain     = 0;        % RF  gain
-rxgain     = 0;        % RF gain
+txgain     = 10;         % RF  gain
+rxgain     = 20;         % RF gain
 decim    = 512;         % decimation (100e6/512 ≈ 195.3125 kS/s)
-Tsec     = 10;           % capture duration (seconds)
+Tsec     = 12;          % capture duration (seconds)
 mcr = 100e6;            %  master clock rate is the analog to digital (A/D) and digital to analog (D/A) clock rate
 fs = 1e6;               % Effective base band sampling rate for up and down sampling
 
@@ -30,27 +30,29 @@ RX = comm.SDRuReceiver(...
     Gain                = rxgain,...
     DecimationFactor    = round(mcr/fs),...
     OutputDataType      = "double",...
-    SamplesPerFrame     = 8192);
+    SamplesPerFrame     = 8192 ...
+    );
 
 % ============== Tx signal ==============
-M = 16;             % Which QAM modulation
-symbolnum = 150; % number of QAM symbold
+M = 4;             % Which QAM modulation
+symbolnum = 800;    % number of QAM symbold
 totalbitLength = symbolnum * log2(M);
 txsymbols = randi(M,symbolnum,1)-1; % it should be column vector
 txmodulated = qammod(txsymbols,M,'UnitAveragePower',true);
 scatterplot(txmodulated);
 
 % make preamble for packet detection
-preambleLen = 50; % ZC preamble length in complex symbol
+preambleLen = 100; % ZC preamble length in complex symbol
 u = 25; n = (0:preambleLen-1).';
 zc_preamble = exp(-1j*pi*u*n.*(n+1)/preambleLen);  
  
 % Apply RRC for pulse shaping and to limit the bandwidth
 txfilter = comm.RaisedCosineTransmitFilter(...
-    OutputSamplesPerSymbol=8 ...
+    OutputSamplesPerSymbol  = 8, ...
+    RolloffFactor           = 0.25 ...
     );
 txdatasymbol = [zc_preamble;txmodulated]; % data packet starts with preamble
-txwave = txfilter(txdatasymbol);
+txwave = txfilter([txdatasymbol;zeros(10,1)]); % Flush with zero
 normalizedtxwave = txwave /sqrt(mean(abs(txwave).^2));
 %disp(["Transmitted wave length is: ", size(normalizedtxwave)]);
 numRepeats = 10;                                  
@@ -59,7 +61,11 @@ txBuf = repmat(normalizedtxwave, numRepeats, 1); % fill the buffer with the same
 
 % ========= Prepare Receiver side operations =========
 % Build the reference preamble for packet detection
-ref_preamble = txfilter(zc_preamble);
+txfilter = comm.RaisedCosineTransmitFilter(...
+    OutputSamplesPerSymbol  = 8, ...
+    RolloffFactor           = 0.25 ...
+    );
+ref_preamble = txfilter([zc_preamble;zeros(10,1)]);
 ref_preamble = ref_preamble / norm(ref_preamble);
 
 % Equalize the power of receiveing signal to achieve a constant signal level
@@ -71,7 +77,8 @@ agc = comm.AGC(...
 % apply matched filtering before sampling
 rxfilter = comm.RaisedCosineReceiveFilter(...
     InputSamplesPerSymbol   =8,...
-    DecimationFactor        =1 ...
+    DecimationFactor        =1, ...
+    RolloffFactor           = 0.25 ...
     );
 
 % Compensates for the frequency offset (In case two modules are connected with MIMO cable, it can be removed)
@@ -119,12 +126,10 @@ while toc(tStart) < Tsec
     %disp(["CFO corrected signal length is of dimension: ", size(y)]);
 
     % find the begining of the transmitted signal
-    convPreamble = abs(conv(y,conj(ref_preamble)));
-    convPreamble = convPreamble ./ sqrt(conv(abs(y).^2, ones(length(ref_preamble),1)));
-    figure;
-    plot(convPreamble);
+    convPreamble = abs(conv(y,flipud(conj(ref_preamble)),"same"));
+    convPreamble = convPreamble ./ sqrt(conv(abs(y).^2, ones(length(ref_preamble),1),"same"));
     [peakValue, peakIndex] = max(convPreamble);
-    if peakValue > 0.3 % packet detected
+    if peakValue > 0.6 % packet detected
         disp("Preamble was decected. Processing....")
         startSamplingIndex = peakIndex + 1;
 
