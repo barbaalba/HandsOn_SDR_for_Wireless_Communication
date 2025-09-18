@@ -1,7 +1,7 @@
 clc;clear;close all;
 % ----------- Module SETTINGS -----------
 fc       = 2.45e9;      % Carrier frequency
-txgain     = 10;         % RF  gain
+txgain     = 20;         % RF  gain
 rxgain     = 20;         % RF gain
 decim    = 512;         % decimation (100e6/512 ≈ 195.3125 kS/s)
 Tsec     = 12;          % capture duration (seconds)
@@ -153,6 +153,10 @@ while toc(tStart) < Tsec
             demodulatedData = qamdemod(ysym, M);
 
             disp(["length of demodulated data: ", size(demodulatedData)]);
+
+            errorRate = sum(demodulatedData ~= txsymbols)/length(txsymbols)*100;
+            disp(["Symbol error rate is: ", errorRate]);
+           
         end
     else
         disp("Frame dropped.")
