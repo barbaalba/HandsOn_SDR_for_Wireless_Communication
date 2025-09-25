@@ -48,8 +48,8 @@ numRepeats = 10;
 txBuf = repmat(txwave, numRepeats, 1);
 
 % Optionally show what we're sending
- scatterplot(txmodulated); title('TX Constellation');
-
+scatterplot(txmodulated); title('TX Constellation');
+scatterplot(txdatasymbol); title('Data and Preamble');
 % ----------- Fire and forget -----------
 Tsec = 12; % transmit duration
 disp('TX host: starting transmission...');
