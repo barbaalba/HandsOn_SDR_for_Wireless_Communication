@@ -11,3 +11,6 @@ This folder includes simple projects with GNU RADIO.
 - QPSK Tx and Rx: Remember that the configurations for these two files should be the same — for instance, carrier frequency, excessive bandwidth for pulse shaping, etc. Note that in my simulation, I have a local oscillator at the receiver side to manually and roughly correct the carrier frequency offset. It was needed since my hardware had more than 100 KHz offset, and the receiver was locking to a different channel. Therefore, I had to guide my system to lock on the correct channel. After that, other building blocks correct for time, frequency, and phase offset. You may need to modify the costas loop bandwidth to demodulate your signal accurately. 
 
 Under progress....
+
+# Reference and Tutorials
+For learning about Gnu Radio Companion and SDRs watch this comprehensive tutorial on [YouTube](https://youtube.com/playlist?list=PLywxmTaHNUNyKmgF70q8q3QHYIw_LFbrX&si=QYRZKumKr65xjSI5). 
