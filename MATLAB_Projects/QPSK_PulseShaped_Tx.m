@@ -1,5 +1,5 @@
 clear;clc;close all;
-
+% -------- USRP/SDR config ---------
 fc = 2.45e9; % carrier frequency
 usrpInterp = 32; % USRP interpolation factor 
 usrpMasterClk = 100e6; % USRP master clock in Hz
@@ -10,6 +10,7 @@ Rs = samplesRate/sps; % symbol rate
 BW = Rs*(1+alpha); % Target occupied bandwidth
 fprintf('Approx occupied BW = %.6f MHz\n', BW/1e6);
 
+% -------- QPSK pulse shaping --------
 
 M = 4; % PSK order
 data = randi([0 M-1],Rs,1);
@@ -56,18 +57,25 @@ TX = comm.SDRuTransmitter('Platform','N200/N210/USRP2',...
     'MasterClockRate',usrpMasterClk,...
     'InterpolationFactor', usrpInterp);
 
-Tsec = 60; % transmit duration
+Tsec = 12; % transmit duration
 underRuncount = 0; % To count underruns
+txCallTimes = []; % To monitor and ensure underrun does not happen in my config
 disp('TX host: starting transmission...');
 tStart = tic;
 while toc(tStart) < Tsec
+    tCall = tic;
     % undrrun happens when there is not enough data from host computer to 
     % SDR so SDR transmit zero and continuity of data is interupted so it
     % should be counted and reported.
-    underRun = TX(txsig); 
+    underRun = TX(txsig); % With my configuration the air time is exactly 1 second
+    txCallTimes(end+1) = toc(tCall);
     underRuncount = underRuncount + any(underRun);
 end
 disp('TX host: done.');
 fprintf('Underrun count: %d\n', underRuncount);
+fprintf('TX call timing (seconds):\n');
+fprintf('  Min:  %.6f\n', min(txCallTimes));
+fprintf('  Mean: %.6f\n', mean(txCallTimes));
+fprintf('  Max:  %.6f\n', max(txCallTimes));
 
 release(TX);
