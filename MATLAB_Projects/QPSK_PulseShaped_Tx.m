@@ -11,9 +11,12 @@ BW = Rs*(1+alpha); % Target occupied bandwidth
 fprintf('Approx occupied BW = %.6f MHz\n', BW/1e6);
 
 % -------- QPSK pulse shaping --------
-
 M = 4; % PSK order
-data = randi([0 M-1],Rs,1);
+frameSample = 8192; % number of samples per TX SDR call (multiple of sps)
+symbPerFrame = frameSample/sps;
+framePerBuffer = 200; % How many frame should be in the host buffer
+numSymbols = symbPerFrame*framePerBuffer;
+data = randi([0 M-1],numSymbols,1);
 qpsksymb = pskmod(data,M,pi/4);
 
 % Pulse shaping with RRC
@@ -28,23 +31,22 @@ txPulseShape.Gain = 1/sum(b.Numerator);
 txsig = txPulseShape(qpsksymb);
 
 %------- Visualization of the symbols and pulse shaped signal ------
-% scatterplot(qpsksymb);
-% figure;
-% plot(real(repelem(qpsksymb,sps)))
-% hold on;
-% plot(imag(repelem(qpsksymb,sps)),'--');
-% ylim([-2,2]);
-% figure;
-% plot(real(txsig));
-% hold on;
-% plot(imag(txsig));
+scatterplot(qpsksymb);
+figure;
+plot(real(repelem(qpsksymb,sps)))
+hold on;
+plot(imag(repelem(qpsksymb,sps)),'--');
+ylim([-2,2]);
+figure;
+plot(real(txsig(1:frameSample)));
+hold on;
+plot(imag(txsig(1:frameSample)));
 
 %------- Spectrum of the signal ----------
 scope = spectrumAnalyzer(SampleRate=samplesRate,...
     YLimits=[-120,40],...
     Title=sprintf("QPSK RRC: Rs=%.3f ksym/s, Fs=%.3f MS/s, alpha=%.2f", Rs/1e3, samplesRate/1e6, alpha));
 scope(txsig);
-
 
 release(scope);
 release(txPulseShape);
@@ -57,19 +59,26 @@ TX = comm.SDRuTransmitter('Platform','N200/N210/USRP2',...
     'MasterClockRate',usrpMasterClk,...
     'InterpolationFactor', usrpInterp);
 
-Tsec = 12; % transmit duration
+Tsec = 60; % transmit duration
+TxFrameCount = 1; % counter for tracking which frame being transmitted
 underRuncount = 0; % To count underruns
 txCallTimes = []; % To monitor and ensure underrun does not happen in my config
 disp('TX host: starting transmission...');
 tStart = tic;
 while toc(tStart) < Tsec
-    tCall = tic;
     % undrrun happens when there is not enough data from host computer to 
     % SDR so SDR transmit zero and continuity of data is interupted so it
     % should be counted and reported.
-    underRun = TX(txsig); % With my configuration the air time is exactly 1 second
+    txFrame = txsig((TxFrameCount-1)*frameSample + (1:frameSample));
+    tCall = tic;
+    underRun = TX(txFrame); 
     txCallTimes(end+1) = toc(tCall);
+    TxFrameCount = TxFrameCount +1;
     underRuncount = underRuncount + any(underRun);
+
+    if TxFrameCount > framePerBuffer
+        TxFrameCount = 1; % loop the buffer
+    end
 end
 disp('TX host: done.');
 fprintf('Underrun count: %d\n', underRuncount);
