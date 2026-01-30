@@ -12,8 +12,8 @@ fprintf('Approx occupied BW = %.6f MHz\n', BW/1e6);
 
 % -------- QPSK pulse shaping --------
 M = 4; % PSK order
-frameSample = 8192; % number of samples per TX SDR call (multiple of sps)
-symbPerFrame = frameSample/sps;
+frameLen = 8192; % number of samples per TX SDR call (multiple of sps)
+symbPerFrame = frameLen/sps;
 framePerBuffer = 200; % How many frame should be in the host buffer
 numSymbols = symbPerFrame*framePerBuffer;
 data = randi([0 M-1],numSymbols,1);
@@ -38,9 +38,9 @@ hold on;
 plot(imag(repelem(qpsksymb,sps)),'--');
 ylim([-2,2]);
 figure;
-plot(real(txsig(1:frameSample)));
+plot(real(txsig(1:frameLen)));
 hold on;
-plot(imag(txsig(1:frameSample)));
+plot(imag(txsig(1:frameLen)));
 
 %------- Spectrum of the signal ----------
 scope = spectrumAnalyzer(SampleRate=samplesRate,...
@@ -69,7 +69,7 @@ while toc(tStart) < Tsec
     % undrrun happens when there is not enough data from host computer to 
     % SDR so SDR transmit zero and continuity of data is interupted so it
     % should be counted and reported.
-    txFrame = txsig((TxFrameCount-1)*frameSample + (1:frameSample));
+    txFrame = txsig((TxFrameCount-1)*frameLen + (1:frameLen));
     tCall = tic;
     underRun = TX(txFrame); 
     txCallTimes(end+1) = toc(tCall);
