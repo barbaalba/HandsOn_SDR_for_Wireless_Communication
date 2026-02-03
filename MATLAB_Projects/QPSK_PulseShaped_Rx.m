@@ -94,9 +94,9 @@ scope([rxCompensated,rxData]);
 release(scope);
 
 rxSymb = rxRRC(rxCompensated(frameLen+1:end)); % drop the head otherwise it can not lock
-scatterplot(rxSymb(1:1000));
+scatterplot(rxSymb(frameLen:2*frameLen)); % It is all over the place
 rxSynced = symSync(rxSymb);
-scatterplot(rxSynced(1:1000));
+scatterplot(rxSynced(frameLen:2*frameLen)); % It is around the circle since there is a residual phase shift
 
 rxFinal = carSync(rxSynced);
-scatterplot(rxFinal);
+scatterplot(rxFinal(frameLen:2*frameLen)); % It is mostly concentrated at the correct constellation location
