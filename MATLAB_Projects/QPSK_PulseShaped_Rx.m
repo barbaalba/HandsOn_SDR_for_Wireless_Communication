@@ -93,7 +93,7 @@ rxData = agc(rxData);
 scope([rxCompensated,rxData]);
 release(scope);
 
-rxSymb = rxRRC(rxCompensated(frameLen+1:end)); % drop the head otherwise it can not lock
+rxSymb = rxRRC(rxCompensated(frameLen+1:end)); % drop the head otherwise it can not lock since there is a large amplitude variation at the begining
 scatterplot(rxSymb(frameLen:2*frameLen)); % It is all over the place
 rxSynced = symSync(rxSymb);
 scatterplot(rxSynced(frameLen:2*frameLen)); % It is around the circle since there is a residual phase shift
