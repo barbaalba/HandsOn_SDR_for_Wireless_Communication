@@ -4,3 +4,4 @@
 - QPSK with RRC Rx: It implements RRC filter, Carrier synchronization, time synchronization, and phase recovery at the receiver. 
 
 # Visualization of QPSK RX Outputs
+![hi](Images/CFO.png)
