@@ -41,6 +41,7 @@ figure;
 plot(real(txsig(1:frameLen)));
 hold on;
 plot(imag(txsig(1:frameLen)));
+eyediagram(txsig(1:frameLen/4),2*sps);
 
 %------- Spectrum of the signal ----------
 scope = spectrumAnalyzer(SampleRate=samplesRate,...
