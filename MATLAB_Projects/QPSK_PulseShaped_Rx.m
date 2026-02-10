@@ -104,7 +104,9 @@ title('IQ samples after RRC filter');
 rxSynced = symSync(rxSymb);
 scatterplot(rxSynced(frameLen:5*frameLen)); % It is around the circle since there is a residual phase shift
 title('IQ samples after time syncronization');
+eyediagram(rxSynced(1:frameLen/4),2*sps);
 
 rxFinal = carSync(rxSynced);
 scatterplot(rxFinal(frameLen:5*frameLen)); % It is mostly concentrated at the correct constellation location
 title('IQ samples after residual phase error correction');
+eyediagram(rxFinal(1:frameLen/4),2*sps);
