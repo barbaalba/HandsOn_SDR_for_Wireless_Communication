@@ -3,5 +3,10 @@
 - QPSK with RRC Tx: It sends RRC pulse-shaped QPSK data using SDR. The code checks for underruns, since they affect the spectrum of the tx data. When underruns occur, the chunk of zeros is transmitted over the air because the SDR buffer is empty. This results in a wider spectrum and broadens the signal bandwidth, affecting the adjacent channels. It is important to avoid it.
 - QPSK with RRC Rx: It implements RRC filter, Carrier synchronization, time synchronization, and phase recovery at the receiver. 
 
-# Visualization of QPSK RX Outputs
-![hi](Images/CFO.png)
+<details>
+  <summary> Visualization of QPSK RX Outputs </summary>
+  
+![](Images/CFO.png)
+![](Images/IQ_All.png)
+![](Images/Eye_All.png)
+  </details>
