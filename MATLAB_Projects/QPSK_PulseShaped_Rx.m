@@ -100,14 +100,20 @@ release(scope);
 rxSymb = rxRRC(rxCompensated); 
 scatterplot(rxSymb(frameLen:5*frameLen)); % It is all over the place, a cloud of dots
 title('IQ samples after RRC filter');
-eyediagram(rxSymb(1:frameLen/4),2*sps);
+fig1 = eyediagram(rxSymb(1:frameLen/4),2*sps);
+fig1.Children(2).Title.String = 'Quadrature Signal after RRC';
+fig1.Children(4).Title.String = 'In-Phase Signal after RRC';
 
 rxSynced = symSync(rxSymb);
 scatterplot(rxSynced(frameLen:5*frameLen)); % It is around the circle since there is a residual phase shift
 title('IQ samples after time syncronization');
-eyediagram(rxSynced(1:frameLen/4),2*sps);
+fig2 = eyediagram(rxSynced(1:frameLen/4),2*sps);
+fig2.Children(2).Title.String = 'Quadrature Signal after time sync';
+fig2.Children(4).Title.String = 'In-Phase Signal after time sync';
 
 rxFinal = carSync(rxSynced);
 scatterplot(rxFinal(frameLen:5*frameLen)); % It is mostly concentrated at the correct constellation location
 title('IQ samples after residual phase error correction');
-eyediagram(rxFinal(1:frameLen/4),2*sps); % the shouold be oppened
+fig3 = eyediagram(rxFinal(1:frameLen/4),2*sps); % the shouold be oppened
+fig3.Children(2).Title.String = 'Quadrature Signal after phase residual correction';
+fig3.Children(4).Title.String = 'In-Phase Signal after phase residual correction';
