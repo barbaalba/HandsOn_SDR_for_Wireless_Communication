@@ -100,6 +100,7 @@ release(scope);
 rxSymb = rxRRC(rxCompensated); 
 scatterplot(rxSymb(frameLen:5*frameLen)); % It is all over the place, a cloud of dots
 title('IQ samples after RRC filter');
+eyediagram(rxSymb(1:frameLen/4),2*sps);
 
 rxSynced = symSync(rxSymb);
 scatterplot(rxSynced(frameLen:5*frameLen)); % It is around the circle since there is a residual phase shift
@@ -109,4 +110,4 @@ eyediagram(rxSynced(1:frameLen/4),2*sps);
 rxFinal = carSync(rxSynced);
 scatterplot(rxFinal(frameLen:5*frameLen)); % It is mostly concentrated at the correct constellation location
 title('IQ samples after residual phase error correction');
-eyediagram(rxFinal(1:frameLen/4),2*sps);
+eyediagram(rxFinal(1:frameLen/4),2*sps); % the shouold be oppened
