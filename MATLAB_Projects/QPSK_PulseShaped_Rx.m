@@ -47,7 +47,7 @@ agc = comm.AGC( ...
 freqComp = comm.CoarseFrequencyCompensator( ...
     Modulation=modType, ...
     SampleRate=samplesRate, ...
-    FrequencyResolution=1); 
+    FrequencyResolution=50); 
 
 rxRRC = comm.RaisedCosineReceiveFilter( ...
     Shape="Square root", ...
@@ -57,9 +57,9 @@ rxRRC = comm.RaisedCosineReceiveFilter( ...
     FilterSpanInSymbols=11);
 
 symSync = comm.SymbolSynchronizer( ...
-    TimingErrorDetector="Zero-Crossing (decision-directed)", ...
+    TimingErrorDetector="Gardner (non-data-aided)", ...
     SamplesPerSymbol=sps, ...
-    NormalizedLoopBandwidth=0.001, ...   % range between 0 and 1
+    NormalizedLoopBandwidth=0.005, ...   % range between 0 and 1
     DampingFactor=1, ...
     DetectorGain=2.7);
 
@@ -74,6 +74,10 @@ overRuncount = 0;
 k = 1;
 
 disp("Recording...");
+for i = 1:2
+    RX(); % warm-up RF 
+end
+
 tStart = tic;
 while toc(tStart) < Tsec
     [rxBB,dateLen,overrun] = RX();
@@ -83,20 +87,24 @@ while toc(tStart) < Tsec
     k = k + 1;
 end
 
-%release(scope);
 release(RX);
-rxData = rxData(2*frameLen:(k-1)*frameLen); % Exclude the data part
+rxData = rxData(1:(k-1)*frameLen); % Exclude the data part
 
 % ---------- Post processing ----------
-rxData = agc(rxData);
+rxData = agc(rxData); % There is a sharp variation after applying agc
+rxData = rxData(frameLen+1:end); % drop the head otherwise it can not lock since there is a large amplitude variation at the begining
 [rxCompensated,estFreqOffset] = freqComp(rxData);
 scope([rxCompensated,rxData]);
 release(scope);
 
-rxSymb = rxRRC(rxCompensated(frameLen+1:end)); % drop the head otherwise it can not lock since there is a large amplitude variation at the begining
-scatterplot(rxSymb(frameLen:2*frameLen)); % It is all over the place
+rxSymb = rxRRC(rxCompensated); 
+scatterplot(rxSymb(frameLen:5*frameLen)); % It is all over the place, a cloud of dots
+title('IQ samples after RRC filter');
+
 rxSynced = symSync(rxSymb);
-scatterplot(rxSynced(frameLen:2*frameLen)); % It is around the circle since there is a residual phase shift
+scatterplot(rxSynced(frameLen:5*frameLen)); % It is around the circle since there is a residual phase shift
+title('IQ samples after time syncronization');
 
 rxFinal = carSync(rxSynced);
-scatterplot(rxFinal(frameLen:2*frameLen)); % It is mostly concentrated at the correct constellation location
+scatterplot(rxFinal(frameLen:5*frameLen)); % It is mostly concentrated at the correct constellation location
+title('IQ samples after residual phase error correction');
